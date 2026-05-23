@@ -46,8 +46,8 @@ app.post('/api/devices/register', async (req, res) => {
         }
 
         const synchronizedDevice = await DeviceToken.findOneAndUpdate(
-            { fcmToken },
-            { userId, hostelName },
+            { userId },
+            { fcmToken, hostelName },
             { upsert: true, returnDocument: 'after' }
         );
 
@@ -76,6 +76,11 @@ app.post('/api/notifications/trigger', async (req, res) => {
             notification: {
                 title: `Order Alert in ${hostelName}!`,
                 body: 'Someone just initiated an order. Open the app to pool items!'
+            },
+            webpush: {
+                fcmOptions: {
+                    link: "https://instantpal.vercel.app"
+                }
             },
             tokens: tokensList 
         };
@@ -109,6 +114,11 @@ app.post('/api/notifications/notify-user', async (req, res) => {
 
         const messagePayload = {
             notification: { title, body },
+            webpush: {
+                fcmOptions: {
+                    link: "https://instantpal.vercel.app"
+                }
+            },
             tokens: tokensList
         };
 
