@@ -46,8 +46,8 @@ app.post('/api/devices/register', async (req, res) => {
         }
 
         const synchronizedDevice = await DeviceToken.findOneAndUpdate(
-            { userId },
-            { fcmToken, hostelName },
+            { fcmToken },
+            { userId, hostelName },
             { upsert: true, returnDocument: 'after' }
         );
 
@@ -89,6 +89,18 @@ app.post('/api/notifications/trigger', async (req, res) => {
         };
 
         const response = await admin.messaging().sendEachForMulticast(messagePayload);
+        
+        if (response.failureCount > 0) {
+            const failedTokens = [];
+            response.responses.forEach((resp, idx) => {
+                if (!resp.success) {
+                    failedTokens.push(tokensList[idx]);
+                }
+            });
+            if (failedTokens.length > 0) {
+                await DeviceToken.deleteMany({ fcmToken: { $in: failedTokens } });
+            }
+        }
         
         console.log(`[Firebase] Broadcast sent for ${hostelName}. Success: ${response.successCount}, Failed: ${response.failureCount}`);
         
@@ -132,6 +144,18 @@ app.post('/api/notifications/notify-user', async (req, res) => {
         };
 
         const response = await admin.messaging().sendEachForMulticast(messagePayload);
+        
+        if (response.failureCount > 0) {
+            const failedTokens = [];
+            response.responses.forEach((resp, idx) => {
+                if (!resp.success) {
+                    failedTokens.push(tokensList[idx]);
+                }
+            });
+            if (failedTokens.length > 0) {
+                await DeviceToken.deleteMany({ fcmToken: { $in: failedTokens } });
+            }
+        }
         
         console.log(`[Firebase] DM sent to User ${targetUserId}. Success: ${response.successCount}`);
         return res.status(200).json({ success: true, response });
