@@ -80,6 +80,10 @@ app.post('/api/notifications/trigger', async (req, res) => {
                 body: 'Someone just initiated an order. Open the app to pool items!'
             },
             webpush: {
+                // ✅ ADDED: Forces the OS to wake up the app even if swiped away
+                headers: {
+                    Urgency: "high"
+                },
                 fcmOptions: {
                     link: "https://instantpal.vercel.app"
                 }
@@ -119,6 +123,10 @@ app.post('/api/notifications/notify-user', async (req, res) => {
         const messagePayload = {
             notification: { title, body },
             webpush: {
+                // ✅ ADDED: Forces the OS to wake up the app even if swiped away
+                headers: {
+                    Urgency: "high"
+                },
                 fcmOptions: {
                     link: "https://instantpal.vercel.app"
                 }
