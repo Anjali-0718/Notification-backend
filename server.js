@@ -26,13 +26,13 @@ admin.initializeApp({
 });
 
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('Notification Database Connected Successfully'))
-    .catch(err => console.error('Database Connection Error:', err));
+    .then(() => {})
+    .catch(() => {});
 
 const tokenSchema = new mongoose.Schema({
-    userId: { type: String, required: true },
+    userId: { type: String, required: true, unique: true },
     hostelName: { type: String, required: true },
-    fcmToken: { type: String, required: true, unique: true }
+    fcmTokens: [{ type: String }]
 }, { timestamps: true });
 
 const DeviceToken = mongoose.model('DeviceToken', tokenSchema);
@@ -42,20 +42,21 @@ app.post('/api/devices/register', async (req, res) => {
         const { userId, hostelName, fcmToken } = req.body;
 
         if (!userId || !hostelName || !fcmToken) {
-            return res.status(400).json({ success: false, message: 'Missing parameters.' });
+            return res.status(400).json({ success: false });
         }
 
         const synchronizedDevice = await DeviceToken.findOneAndUpdate(
-            { fcmToken },
-            { userId, hostelName },
-            { upsert: true, returnDocument: 'after' }
+            { userId },
+            { 
+                $set: { hostelName },
+                $addToSet: { fcmTokens: fcmToken } 
+            },
+            { upsert: true, new: true }
         );
-
-        console.log(`[Database] Successfully saved token for User: ${userId} in ${hostelName}`);
 
         return res.status(200).json({ success: true, data: synchronizedDevice });
     } catch (error) {
-        return res.status(500).json({ success: false, error: error.message });
+        return res.status(500).json({ success: false });
     }
 });
 
@@ -64,14 +65,22 @@ app.post('/api/notifications/trigger', async (req, res) => {
         const { hostelName, initiatorId } = req.body;
 
         if (!hostelName || !initiatorId) {
-            return res.status(400).json({ success: false, message: 'Missing hostelName or initiatorId.' });
+            return res.status(400).json({ success: false });
         }
 
-        const targetDevices = await DeviceToken.find({ hostelName, userId: { $ne: initiatorId } });
-        const tokensList = targetDevices.map(device => device.fcmToken);
+        const targetUsers = await DeviceToken.find({ hostelName, userId: { $ne: initiatorId } });
+        
+        let tokensList = [];
+        targetUsers.forEach(user => {
+            if (user.fcmTokens && user.fcmTokens.length > 0) {
+                tokensList = tokensList.concat(user.fcmTokens);
+            }
+        });
+
+        tokensList = [...new Set(tokensList)];
 
         if (tokensList.length === 0) {
-            return res.status(200).json({ success: true, message: 'No other devices active in this hostel.' });
+            return res.status(200).json({ success: true });
         }
 
         const messagePayload = {
@@ -98,11 +107,12 @@ app.post('/api/notifications/trigger', async (req, res) => {
                 }
             });
             if (failedTokens.length > 0) {
-                await DeviceToken.deleteMany({ fcmToken: { $in: failedTokens } });
+                await DeviceToken.updateMany(
+                    { fcmTokens: { $in: failedTokens } },
+                    { $pull: { fcmTokens: { $in: failedTokens } } }
+                );
             }
         }
-        
-        console.log(`[Firebase] Broadcast sent for ${hostelName}. Success: ${response.successCount}, Failed: ${response.failureCount}`);
         
         return res.status(200).json({
             success: true,
@@ -110,7 +120,7 @@ app.post('/api/notifications/trigger', async (req, res) => {
             failureCount: response.failureCount
         });
     } catch (error) {
-        return res.status(500).json({ success: false, error: error.message });
+        return res.status(500).json({ success: false });
     }
 });
 
@@ -119,15 +129,16 @@ app.post('/api/notifications/notify-user', async (req, res) => {
         const { targetUserId, title, body } = req.body;
 
         if (!targetUserId || !title || !body) {
-            return res.status(400).json({ success: false, message: 'Missing required fields' });
+            return res.status(400).json({ success: false });
         }
 
-        const userTokens = await DeviceToken.find({ userId: targetUserId });
-        const tokensList = userTokens.map(doc => doc.fcmToken);
+        const targetUser = await DeviceToken.findOne({ userId: targetUserId });
 
-        if (tokensList.length === 0) {
-            return res.status(404).json({ success: false, message: 'User has no registered devices' });
+        if (!targetUser || !targetUser.fcmTokens || targetUser.fcmTokens.length === 0) {
+            return res.status(404).json({ success: false });
         }
+
+        const tokensList = [...new Set(targetUser.fcmTokens)];
 
         const messagePayload = {
             data: { 
@@ -153,16 +164,17 @@ app.post('/api/notifications/notify-user', async (req, res) => {
                 }
             });
             if (failedTokens.length > 0) {
-                await DeviceToken.deleteMany({ fcmToken: { $in: failedTokens } });
+                await DeviceToken.updateOne(
+                    { userId: targetUserId },
+                    { $pull: { fcmTokens: { $in: failedTokens } } }
+                );
             }
         }
         
-        console.log(`[Firebase] DM sent to User ${targetUserId}. Success: ${response.successCount}`);
-        return res.status(200).json({ success: true, response });
+        return res.status(200).json({ success: true });
 
     } catch (error) {
-        console.error("[Firebase] DM Error:", error);
-        return res.status(500).json({ success: false, error: error.message });
+        return res.status(500).json({ success: false });
     }
 });
 
@@ -171,4 +183,4 @@ app.get('/api/health', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => console.log(`Notification Microservice running on port ${PORT}`));
+app.listen(PORT, () => {});
