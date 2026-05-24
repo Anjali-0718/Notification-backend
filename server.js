@@ -121,7 +121,7 @@ app.post('/api/notifications/notify-user', async (req, res) => {
             data: { 
                 title: title, 
                 body: body,
-                link: "https://instantpal.vercel.app"
+                link: "https://instantpal-client.onrender.com"
             },
             webpush: {
                 headers: {
