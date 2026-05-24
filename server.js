@@ -51,6 +51,8 @@ app.post('/api/devices/register', async (req, res) => {
             { upsert: true, returnDocument: 'after' }
         );
 
+        console.log(`[Database] Successfully saved token for User: ${userId} in ${hostelName}`);
+
         return res.status(200).json({ success: true, data: synchronizedDevice });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
