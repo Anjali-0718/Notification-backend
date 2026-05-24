@@ -75,17 +75,14 @@ app.post('/api/notifications/trigger', async (req, res) => {
         }
 
         const messagePayload = {
-            notification: {
+            data: {
                 title: `Order Alert in ${hostelName}!`,
-                body: 'Someone just initiated an order. Open the app to pool items!'
+                body: 'Someone just initiated an order. Open the app to pool items!',
+                link: "https://instantpal.vercel.app"
             },
             webpush: {
-                // ✅ ADDED: Forces the OS to wake up the app even if swiped away
                 headers: {
                     Urgency: "high"
-                },
-                fcmOptions: {
-                    link: "https://instantpal.vercel.app"
                 }
             },
             tokens: tokensList 
@@ -121,14 +118,14 @@ app.post('/api/notifications/notify-user', async (req, res) => {
         }
 
         const messagePayload = {
-            notification: { title, body },
+            data: { 
+                title: title, 
+                body: body,
+                link: "https://instantpal.vercel.app"
+            },
             webpush: {
-                // ✅ ADDED: Forces the OS to wake up the app even if swiped away
                 headers: {
                     Urgency: "high"
-                },
-                fcmOptions: {
-                    link: "https://instantpal.vercel.app"
                 }
             },
             tokens: tokensList
