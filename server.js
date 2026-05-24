@@ -89,6 +89,8 @@ app.post('/api/notifications/trigger', async (req, res) => {
 
         const response = await admin.messaging().sendEachForMulticast(messagePayload);
         
+        console.log(`[Firebase] Broadcast sent for ${hostelName}. Success: ${response.successCount}, Failed: ${response.failureCount}`);
+        
         return res.status(200).json({
             success: true,
             successCount: response.successCount,
