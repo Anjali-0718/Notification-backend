@@ -78,7 +78,7 @@ app.post('/api/notifications/trigger', async (req, res) => {
             data: {
                 title: `Order Alert in ${hostelName}!`,
                 body: 'Someone just initiated an order. Open the app to pool items!',
-                link: "https://instantpal.vercel.app"
+                link: "https://instantpal-client.onrender.com"
             },
             webpush: {
                 headers: {
