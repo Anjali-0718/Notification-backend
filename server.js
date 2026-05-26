@@ -26,8 +26,8 @@ admin.initializeApp({
 });
 
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => {})
-    .catch(() => {});
+    .then(() => console.log('Notification Database Connected Successfully'))
+    .catch(err => console.error('Database Connection Error:', err));
 
 const tokenSchema = new mongoose.Schema({
     userId: { type: String, required: true, unique: true },
@@ -42,7 +42,7 @@ app.post('/api/devices/register', async (req, res) => {
         const { userId, hostelName, fcmToken } = req.body;
 
         if (!userId || !hostelName || !fcmToken) {
-            return res.status(400).json({ success: false });
+            return res.status(400).json({ success: false, message: 'Missing parameters.' });
         }
 
         const synchronizedDevice = await DeviceToken.findOneAndUpdate(
@@ -51,11 +51,14 @@ app.post('/api/devices/register', async (req, res) => {
                 $set: { hostelName },
                 $addToSet: { fcmTokens: fcmToken } 
             },
-            { upsert: true, new: true }
+            { upsert: true, returnDocument: 'after' }
         );
+
+        console.log(`[Database] Successfully saved token for User: ${userId} in ${hostelName}`);
 
         return res.status(200).json({ success: true, data: synchronizedDevice });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ success: false });
     }
 });
@@ -80,7 +83,8 @@ app.post('/api/notifications/trigger', async (req, res) => {
         tokensList = [...new Set(tokensList)];
 
         if (tokensList.length === 0) {
-            return res.status(200).json({ success: true });
+            console.log(`[Firebase] No other users found to notify in ${hostelName}. (Remember: the initiator doesn't get notified!)`);
+            return res.status(200).json({ success: true, message: 'No targets found' });
         }
 
         const messagePayload = {
@@ -114,12 +118,15 @@ app.post('/api/notifications/trigger', async (req, res) => {
             }
         }
         
+        console.log(`[Firebase] Broadcast sent for ${hostelName}. Success: ${response.successCount}, Failed: ${response.failureCount}`);
+        
         return res.status(200).json({
             success: true,
             successCount: response.successCount,
             failureCount: response.failureCount
         });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ success: false });
     }
 });
@@ -171,9 +178,11 @@ app.post('/api/notifications/notify-user', async (req, res) => {
             }
         }
         
+        console.log(`[Firebase] DM sent to User ${targetUserId}. Success: ${response.successCount}`);
         return res.status(200).json({ success: true });
 
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ success: false });
     }
 });
@@ -183,4 +192,4 @@ app.get('/api/health', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {});
+app.listen(PORT, () => console.log(`Notification Microservice running on port ${PORT}`));
