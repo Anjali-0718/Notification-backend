@@ -83,7 +83,7 @@ app.post('/api/notifications/trigger', async (req, res) => {
         tokensList = [...new Set(tokensList)];
 
         if (tokensList.length === 0) {
-            console.log(`[Firebase] No other users found to notify in ${hostelName}. (Remember: the initiator doesn't get notified!)`);
+            console.log(`[Firebase] No other users found to notify in ${hostelName}.`);
             return res.status(200).json({ success: true, message: 'No targets found' });
         }
 
@@ -91,18 +91,11 @@ app.post('/api/notifications/trigger', async (req, res) => {
             data: {
                 title: `Order Alert in ${hostelName}!`,
                 body: 'Someone just initiated an order. Open the app to pool items!',
-                link: "https://instantpal-client.onrender.com/dashboard",
-                icon: "https://instantpal-client.onrender.com/instaPalLogo.png"
+                link: "https://instantpal-client.onrender.com/dashboard"
             },
             webpush: {
                 headers: {
                     Urgency: "high"
-                },
-                notification: {
-                    title: `Order Alert in ${hostelName}!`,
-                    body: 'Someone just initiated an order. Open the app to pool items!',
-                    icon: "https://instantpal-client.onrender.com/instaPalLogo.png",
-                    clickAction: "https://instantpal-client.onrender.com/dashboard"
                 }
             },
             tokens: tokensList 
@@ -158,18 +151,11 @@ app.post('/api/notifications/notify-user', async (req, res) => {
             data: { 
                 title: title, 
                 body: body,
-                link: "https://instantpal-client.onrender.com/dashboard",
-                icon: "https://instantpal-client.onrender.com/instaPalLogo.png"
+                link: "https://instantpal-client.onrender.com/dashboard"
             },
             webpush: {
                 headers: {
                     Urgency: "high"
-                },
-                notification: {
-                    title: title,
-                    body: body,
-                    icon: "https://instantpal-client.onrender.com/instaPalLogo.png",
-                    clickAction: "https://instantpal-client.onrender.com/dashboard"
                 }
             },
             tokens: tokensList
