@@ -99,7 +99,10 @@ app.post('/api/notifications/trigger', async (req, res) => {
                     Urgency: "high"
                 },
                 notification: {
-                    icon: "https://instantpal-client.onrender.com/instaPalLogo.png"
+                    title: `Order Alert in ${hostelName}!`,
+                    body: 'Someone just initiated an order. Open the app to pool items!',
+                    icon: "https://instantpal-client.onrender.com/instaPalLogo.png",
+                    clickAction: "https://instantpal-client.onrender.com/dashboard"
                 }
             },
             tokens: tokensList 
@@ -163,7 +166,10 @@ app.post('/api/notifications/notify-user', async (req, res) => {
                     Urgency: "high"
                 },
                 notification: {
-                    icon: "https://instantpal-client.onrender.com/instaPalLogo.png"
+                    title: title,
+                    body: body,
+                    icon: "https://instantpal-client.onrender.com/instaPalLogo.png",
+                    clickAction: "https://instantpal-client.onrender.com/dashboard"
                 }
             },
             tokens: tokensList
