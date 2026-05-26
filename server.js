@@ -91,11 +91,15 @@ app.post('/api/notifications/trigger', async (req, res) => {
             data: {
                 title: `Order Alert in ${hostelName}!`,
                 body: 'Someone just initiated an order. Open the app to pool items!',
-                link: "https://instantpal-client.onrender.com/dashboard"
+                link: "https://instantpal-client.onrender.com/dashboard",
+                icon: "https://instantpal-client.onrender.com/instaPalLogo.png"
             },
             webpush: {
                 headers: {
                     Urgency: "high"
+                },
+                notification: {
+                    icon: "https://instantpal-client.onrender.com/instaPalLogo.png"
                 }
             },
             tokens: tokensList 
@@ -151,11 +155,15 @@ app.post('/api/notifications/notify-user', async (req, res) => {
             data: { 
                 title: title, 
                 body: body,
-                link: "https://instantpal-client.onrender.com/dashboard"
+                link: "https://instantpal-client.onrender.com/dashboard",
+                icon: "https://instantpal-client.onrender.com/instaPalLogo.png"
             },
             webpush: {
                 headers: {
                     Urgency: "high"
+                },
+                notification: {
+                    icon: "https://instantpal-client.onrender.com/instaPalLogo.png"
                 }
             },
             tokens: tokensList
